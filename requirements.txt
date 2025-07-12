@@ -1,0 +1,31 @@
+# Base Python packages
+python-dotenv==1.0.0
+ruamel.yaml==0.17.21      # Alternative plus stable à PyYAML
+
+# Database
+psycopg2-binary==2.9.9
+SQLAlchemy==1.4.47
+pymongo==4.6.1
+
+# Date and Time
+python-dateutil==2.9.0.post0
+pytz==2024.1
+
+# Development and Testing
+pytest==7.3.1
+pytest-cov==4.1.0
+coverage==7.2.7
+black==23.3.0
+flake8==6.0.0
+
+# System and OS
+distro==1.7.0
+
+# Additional Utils
+tqdm==4.65.0
+requests==2.31.0
+urllib3==2.0.7
+
+# Production
+gunicorn==21.2.0
+Werkzeug==2.2.3

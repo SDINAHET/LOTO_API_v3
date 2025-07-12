@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Statistiques - Loto Tracker</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="loto_tracker.png">
+</head>
+<body class="bg-light">
+
+<!-- ✅ Navbar -->
+<!-- <nav class="navbar navbar-dark bg-dark p-3">
+    <a class="navbar-brand" href="index_connexion.html">
+        <i class="fas fa-home"></i> Accueil
+    </a>
+    <span class="me-3">Bienvenue, <span id="userEmail"></span></span>
+    <button class="btn btn-danger" onclick="logout()">
+        <i class="fas fa-sign-out-alt"></i> Se déconnecter
+    </button>
+</nav> -->
+<!-- <nav class="navbar navbar-dark bg-dark p-3">
+    <a class="navbar-brand" href="index_connexion.html">
+        <i class="fas fa-home"></i> Accueil
+    </a>
+    <span class="me-3 text-white">Bienvenue, <span id="userEmail"></span></span>
+    <button class="btn btn-danger" onclick="logout()">
+        <i class="fas fa-sign-out-alt"></i> Se déconnecter
+    </button>
+</nav> -->
+<nav class="navbar navbar-dark bg-dark p-3 d-flex justify-content-between">
+    <a class="navbar-brand" href="index_connexion.html">
+        <i class="fas fa-home"></i> Accueil
+    </a>
+
+    <div class="d-flex align-items-center">
+        <span class="me-3 text-white">Bienvenue, <span id="userEmail">Utilisateur</span></span>
+        <button class="btn btn-danger" onclick="logout()">
+            <i class="fas fa-sign-out-alt"></i> Se déconnecter
+        </button>
+    </div>
+</nav>
+
+
+<!-- ✅ Contenu principal -->
+<div class="container mt-5">
+    <h2 class="text-center">Statistiques de mes Tirages</h2>
+
+    <div class="row mt-4">
+        <!-- ✅ Tableau des tickets -->
+        <div class="col-md-6">
+            <h5>📅 Historique des Tickets</h5>
+            <table class="table table-striped text-center">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Date</th>
+                        <th>Statut</th>
+                        <th>Gains (€)</th>
+                    </tr>
+                </thead>
+                <tbody id="ticketsTable">
+                    <tr><td colspan="3" class="text-center">Chargement des tickets...</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- ✅ Graphique -->
+        <div class="col-md-6">
+            <canvas id="statsChart"></canvas>
+            <div class="text-center mt-3">
+                <h4>Total Dépensé : <span id="totalDepense" class="text-danger">0</span> €</h4>
+                <h4>Total Gagné : <span id="totalGagne" class="text-success">0</span> €</h4>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ✅ Scripts -->
+<script>
+const API_URL = "http://localhost:8082/api/tickets";
+const API_GAINS = "http://localhost:8082/api/gains";
+
+document.addEventListener("DOMContentLoaded", async function () {
+    await checkUserAuth();
+    await loadUserStats();
+});
+
+// ✅ Vérifier si l'utilisateur est connecté
+async function checkUserAuth() {
+    try {
+        const response = await axios.get("http://localhost:8082/api/auth/me", { withCredentials: true });
+        if (!(response.status === 200 && response.data.email)) {
+            alert("Vous devez être connecté pour accéder à cette page.");
+            window.location.href = "login.html";
+        }
+    } catch (error) {
+        alert("Session expirée. Veuillez vous reconnecter.");
+        window.location.href = "login.html";
+    }
+}
+
+// ✅ Charger les statistiques de l'utilisateur
+async function loadUserStats() {
+    try {
+        const response = await axios.get(API_URL, { withCredentials: true });
+        const gainsResponse = await axios.get(API_GAINS, { withCredentials: true });
+        const gainsMap = new Map(gainsResponse.data.map(g => [g.ticketId, g.gainAmount]));
+
+        let totalDepense = response.data.length * 2.20;
+        let totalGagne = 0;
+
+        let tableBody = document.getElementById("ticketsTable");
+        tableBody.innerHTML = "";
+
+        let labels = [], depensesData = [], gainsData = [];
+        const today = new Date().toISOString().split('T')[0];
+
+        response.data.sort((a, b) => new Date(b.drawDate) - new Date(a.drawDate));
+
+        response.data.forEach(ticket => {
+            if (!ticket.drawDate) return;
+            const drawDate = new Date(ticket.drawDate);
+            const drawDateString = drawDate.toISOString().split('T')[0];
+            const gain = gainsMap.get(ticket.id) ?? 0;
+            totalGagne += gain;
+
+            let status = "En attente";
+            let statusClass = "bg-secondary text-white";
+            const dayOfWeek = drawDate.getUTCDay();
+
+            if (![1, 3, 6].includes(dayOfWeek)) {
+                status = "Erreur Date";
+                statusClass = "bg-danger text-white";
+            } else if (drawDateString < today) {
+                status = gain > 0 ? "Gagné" : "Perdu";
+                statusClass = gain > 0 ? "bg-success text-white" : "bg-warning text-dark";
+            }
+
+            let row = `<tr>
+                <td><b>${formatDate(ticket.drawDate)}</b></td>
+                <td><span class="badge ${statusClass}">${status}</span></td>
+                <td><b>${gain.toFixed(2)}</b></td>
+            </tr>`;
+            tableBody.innerHTML += row;
+
+            labels.push(formatDate(ticket.drawDate));
+            depensesData.push(2.20);
+            gainsData.push(gain);
+        });
+
+        document.getElementById("totalDepense").textContent = totalDepense.toFixed(2);
+        document.getElementById("totalGagne").textContent = totalGagne.toFixed(2);
+
+        generateChart(labels, depensesData, gainsData);
+    } catch (error) {
+        console.error("Erreur lors du chargement des statistiques", error);
+    }
+}
+
+
+// ✅ Générer le graphique
+function generateChart(labels, depensesData, gainsData) {
+    let ctx = document.getElementById("statsChart").getContext("2d");
+
+    new Chart(ctx, {
+        type: "bar",
+        data: {
+            labels: labels,
+            datasets: [
+                {
+                    label: "💸 Dépenses (€)",
+                    data: depensesData,
+                    backgroundColor: "rgba(255, 0, 0, 0.7)",
+                    borderColor: "red",
+                    borderWidth: 1
+                },
+                {
+                    label: "🏆 Gains (€)",
+                    data: gainsData,
+                    backgroundColor: "rgba(0, 255, 0, 0.7)",
+                    borderColor: "green",
+                    borderWidth: 1
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+}
+
+async function checkUserAuth() {
+    try {
+        const response = await axios.get("http://localhost:8082/api/auth/me", { withCredentials: true });
+
+        if (response.status === 200 && response.data.email) {
+            // Vérifie si `first_name` existe, sinon affiche l'email
+            document.getElementById("userEmail").textContent = response.data.first_name || response.data.email;
+        } else {
+            document.getElementById("userEmail").textContent = "Utilisateur inconnu";
+        }
+    } catch (error) {
+        console.error("❌ Erreur d'authentification :", error);
+        document.getElementById("userEmail").textContent = "Utilisateur inconnu";
+    }
+}
+
+// Appel automatique lors du chargement de la page
+document.addEventListener("DOMContentLoaded", checkUserAuth);
+
+
+
+// ✅ Déconnexion
+async function logout() {
+    await axios.post("http://localhost:8082/api/auth/logout", {}, { withCredentials: true });
+    window.location.href = "index.html";
+}
+
+function formatDate(dateStr) {
+    const date = new Date(dateStr);
+    return date.toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' });
+}
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

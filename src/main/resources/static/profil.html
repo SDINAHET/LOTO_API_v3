@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modifier mon profil - Loto Tracker</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="loto_tracker.png">
+</head>
+
+<body class="bg-light">
+
+<nav class="navbar navbar-dark bg-dark p-3 d-flex justify-content-between">
+    <a class="navbar-brand" href="index_connexion.html">
+        <i class="fas fa-home"></i> Accueil
+    </a>
+
+    <div class="d-flex align-items-center">
+        <span class="me-3 text-white">Bienvenue, <span id="userEmail">Utilisateur</span></span>
+        <button class="btn btn-danger" onclick="logout()">
+            <i class="fas fa-sign-out-alt"></i> Se déconnecter
+        </button>
+    </div>
+</nav>
+
+
+<!-- ✅ Contenu principal -->
+<div class="container mt-5">
+    <h2 class="text-center">Modifier mon profil</h2>
+
+    <form id="profileForm" class="mt-4">
+        <!-- ✅ Champ Email (non modifiable) -->
+        <div class="mb-3">
+            <label for="email" class="form-label">Email :</label>
+            <input type="email" class="form-control" id="email" disabled>
+        </div>
+
+        <!-- ✅ Champ Prénom -->
+        <div class="mb-3">
+            <label for="firstName" class="form-label">Prénom :</label>
+            <input type="text" class="form-control" id="firstName">
+        </div>
+
+        <!-- ✅ Champ Nom -->
+        <div class="mb-3">
+            <label for="lastName" class="form-label">Nom :</label>
+            <input type="text" class="form-control" id="lastName">
+        </div>
+
+        <!-- ✅ Champ Mot de passe actuel -->
+        <div class="mb-3">
+            <label for="currentPassword" class="form-label">Mot de passe actuel :</label>
+            <input type="password" class="form-control" id="currentPassword" required>
+        </div>
+
+        <!-- ✅ Bouton Enregistrer -->
+        <button type="submit" class="btn btn-primary w-100" id="saveChanges">
+            Enregistrer les modifications
+        </button>
+    </form>
+</div>
+
+<script>
+let userInfo = {}; // Stocker les infos utilisateur
+
+// ✅ Charger les infos utilisateur au démarrage
+document.addEventListener("DOMContentLoaded", async function () {
+    await loadUserProfile();
+});
+
+// ✅ Charger le profil utilisateur
+async function loadUserProfile() {
+    try {
+        const response = await axios.get("http://localhost:8082/api/auth/me", { withCredentials: true });
+
+        if (!response.data || !response.data.id) {
+            alert("Problème : L'ID utilisateur est invalide !");
+            return;
+        }
+
+        // ✅ Stocke toutes les infos de l'utilisateur
+        userInfo = response.data;
+
+        // ✅ Remplir le formulaire avec les infos actuelles
+        document.getElementById("email").value = userInfo.email;
+        document.getElementById("firstName").value = userInfo.first_name;
+        document.getElementById("lastName").value = userInfo.last_name;
+
+        // ✅ Sauvegarde correcte de l'ID utilisateur dans l'attribut du formulaire
+        document.getElementById("profileForm").setAttribute("data-user-id", userInfo.id);
+    } catch (error) {
+        console.error("❌ Erreur API /me :", error);
+        alert("Erreur lors de la récupération du profil !");
+        window.location.href = "login.html";
+    }
+}
+
+// ✅ Récupérer le JWT via API (si HttpOnly) ou Cookie direct
+async function getJwtToken() {
+    try {
+        let response = await axios.get("http://localhost:8082/api/auth/token", { withCredentials: true });
+        return response.data.jwtToken || null;
+    } catch (error) {
+        console.error("❌ Impossible de récupérer le JWT :", error);
+        return null;
+    }
+}
+
+// ✅ Sauvegarde des modifications
+document.getElementById("profileForm").addEventListener("submit", async function (event) {
+    event.preventDefault();
+
+    let userId = this.getAttribute("data-user-id");
+
+    if (!userId) {
+        alert("❌ Problème : ID utilisateur invalide !");
+        return;
+    }
+
+    let updatedData = {
+        id: userInfo.id,   // 🔥 ID nécessaire pour le PUT
+        firstName: document.getElementById("firstName").value,
+        lastName: document.getElementById("lastName").value,
+        email: userInfo.email,  // 🔥 L'email doit être renvoyé sinon erreur backend
+        password: document.getElementById("currentPassword").value,  // 🔥 Obligatoire pour valider la modification
+        admin: userInfo.admin,  // 🔥 Garder le statut Admin
+        role: userInfo.role     // 🔥 Garder le rôle de l'utilisateur
+    };
+
+    let jwtToken = await getJwtToken();
+
+    if (!jwtToken) {
+        alert("⚠️ Token JWT introuvable. Veuillez vous reconnecter.");
+        window.location.href = "login.html";
+        return;
+    }
+
+    try {
+        let response = await axios.put(`http://localhost:8082/api/users/${userId}`, updatedData, {
+            withCredentials: true,
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${jwtToken}`  // ✅ Ajout du JWT dans les headers
+            }
+        });
+
+        if (response.status === 200) {
+            alert("✅ Modifications enregistrées !");
+            console.log("✅ Modification réussie. Redirection dans 2 secondes...");
+
+            // ✅ Forcer la redirection après 2 secondes
+            setTimeout(() => {
+                window.location.href = "index_connexion.html";
+            }, 2000);
+        } else {
+            alert("⚠ Une erreur inattendue s'est produite.");
+        }
+
+    } catch (error) {
+        console.error("❌ Erreur PUT :", error.response?.data || error.message);
+
+        if (error.response && error.response.status === 401) {
+            alert("❌ Mot de passe incorrect. Veuillez réessayer.");
+        } else {
+            alert("Erreur lors de la mise à jour du profil.");
+        }
+    }
+});
+
+async function checkUserAuth() {
+    try {
+        const response = await axios.get("http://localhost:8082/api/auth/me", { withCredentials: true });
+
+        if (response.status === 200 && response.data.email) {
+            // Vérifie si `first_name` existe, sinon affiche l'email
+            document.getElementById("userEmail").textContent = response.data.first_name || response.data.email;
+        } else {
+            document.getElementById("userEmail").textContent = "Utilisateur inconnu";
+        }
+    } catch (error) {
+        console.error("❌ Erreur d'authentification :", error);
+        document.getElementById("userEmail").textContent = "Utilisateur inconnu";
+    }
+}
+
+// Appel automatique lors du chargement de la page
+document.addEventListener("DOMContentLoaded", checkUserAuth);
+
+
+
+// ✅ Déconnexion
+async function logout() {
+    await axios.post("http://localhost:8082/api/auth/logout", {}, { withCredentials: true });
+    window.location.href = "index.html";
+}
+</script>
+
+</body>
+</html>

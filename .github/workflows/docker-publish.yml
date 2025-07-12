@@ -1,0 +1,367 @@
+# name: Publish Docker Image
+
+# on:
+#   push:
+#     branches:
+#       - main  # Exécuter seulement sur la branche principale
+
+# jobs:
+#   push_to_registry:
+#     name: Push Docker image to GitHub Container Registry
+#     runs-on: ubuntu-latest
+
+#     steps:
+#       - name: Checkout repository
+#         uses: actions/checkout@v3  # Récupère le code source
+
+#       - name: Log in to GitHub Container Registry
+#         run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+
+#       - name: Build and push Docker image
+#         run: |
+#           IMAGE_NAME=ghcr.io/${{ github.repository_owner }}/loto_api_v2
+
+#           # Construire l'image avec un tag latest + SHA du commit
+#           docker build --platform linux/amd64 -t $IMAGE_NAME:latest -t $IMAGE_NAME:${{ github.sha }} .
+
+#           # Pousser les deux tags
+#           docker push $IMAGE_NAME:latest
+#           docker push $IMAGE_NAME:${{ github.sha }}
+
+#       - name: Logout from GitHub Container Registry
+#         run: docker logout ghcr.io
+
+
+# name: Publish Docker Image
+
+# on:
+#   push:
+#     branches:
+#       - main  # Exécuter seulement sur la branche principale
+
+# jobs:
+#   push_to_registry:
+#     name: Push Docker image to GitHub Container Registry
+#     runs-on: ubuntu-latest
+
+#     steps:
+#       - name: Checkout repository
+#         uses: actions/checkout@v3  # Récupère le code source
+
+#       - name: Log in to GitHub Container Registry
+#         run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+
+#       - name: Build and push Docker image
+#         # run: |
+#         #   IMAGE_NAME=ghcr.io/${{ github.repository_owner }}/loto_api_v2
+
+#         #   # Construire l'image avec un tag latest + SHA du commit
+#         #   docker build --platform linux/amd64 -t $IMAGE_NAME:latest -t $IMAGE_NAME:${{ github.sha }} .
+
+#         #   # Pousser les deux tags
+#         #   docker push $IMAGE_NAME:latest
+#         #   docker push $IMAGE_NAME:${{ github.sha }}
+
+#          run: |
+#          IMAGE_NAME=ghcr.io/$(echo "${{ github.repository_owner }}/loto_api_v2" | tr '[:upper:]' '[:lower:]')
+
+#          # Construire l'image avec un tag latest + SHA du commit
+#          docker build --platform linux/amd64 -t $IMAGE_NAME:latest -t $IMAGE_NAME:${{ github.sha }} .
+
+#          # Pousser les deux tags
+#          docker push $IMAGE_NAME:latest
+#          docker push $IMAGE_NAME:${{ github.sha }}
+
+
+#       - name: Logout from GitHub Container Registry
+#         run: docker logout ghcr.io
+
+# name: Publish Docker Image
+
+# on:
+#   push:
+#     branches:
+#       - main  # Exécuter seulement sur la branche principale
+
+# jobs:
+#   push_to_registry:
+#     name: Push Docker image to GitHub Container Registry
+#     runs-on: ubuntu-latest
+
+#     steps:
+#       - name: Checkout repository
+#         uses: actions/checkout@v3  # Récupère le code source
+
+#       - name: Log in to GitHub Container Registry
+#         run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+
+#       - name: Build and push Docker image
+#         run: |
+#           IMAGE_NAME=ghcr.io/$(echo "${{ github.repository_owner }}/loto_api_v2" | tr '[:upper:]' '[:lower:]')
+
+#           # Construire l'image avec un tag latest + SHA du commit
+#           docker build --platform linux/amd64 -t $IMAGE_NAME:latest -t $IMAGE_NAME:${{ github.sha }} .
+
+#           # Pousser les deux tags
+#           docker push $IMAGE_NAME:latest
+#           docker push $IMAGE_NAME:${{ github.sha }}
+
+#       - name: Logout from GitHub Container Registry
+#         run: docker logout ghcr.io
+
+
+# name: Publish Docker Images
+
+# on:
+#   push:
+#     branches:
+#       - main  # Exécuter seulement sur la branche principale
+
+# jobs:
+#   push_to_registry_backend:
+#     name: Push Backend Docker Image to GitHub Container Registry
+#     runs-on: ubuntu-latest
+
+#     steps:
+#       - name: Checkout repository
+#         uses: actions/checkout@v3  # Récupère le code source
+
+#       - name: Log in to GitHub Container Registry
+#         run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+
+#       - name: Build and push Backend Docker image
+#         run: |
+#           IMAGE_NAME=ghcr.io/$(echo "${{ github.repository_owner }}/loto_api_v2_backend" | tr '[:upper:]' '[:lower:]')
+
+#           # Construire et pousser l'image Backend
+#           docker build --platform linux/amd64 -t $IMAGE_NAME:latest -t $IMAGE_NAME:${{ github.sha }} -f Dockerfile.backend .
+#           docker push $IMAGE_NAME:latest
+#           docker push $IMAGE_NAME:${{ github.sha }}
+
+#       - name: Logout from GitHub Container Registry
+#         run: docker logout ghcr.io
+
+#   push_to_registry_frontend:
+#     name: Push Frontend Docker Image to GitHub Container Registry
+#     runs-on: ubuntu-latest
+
+#     steps:
+#       - name: Checkout repository
+#         uses: actions/checkout@v3  # Récupère le code source
+
+#       - name: Log in to GitHub Container Registry
+#         run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+
+#       - name: Build and push Frontend Docker image
+#         run: |
+#           IMAGE_NAME=ghcr.io/$(echo "${{ github.repository_owner }}/loto_api_v2_frontend" | tr '[:upper:]' '[:lower:]')
+
+#           # Construire et pousser l'image Frontend
+#           docker build --platform linux/amd64 -t $IMAGE_NAME:latest -t $IMAGE_NAME:${{ github.sha }} -f Dockerfile.frontend .
+#           docker push $IMAGE_NAME:latest
+#           docker push $IMAGE_NAME:${{ github.sha }}
+
+#       - name: Logout from GitHub Container Registry
+#         run: docker logout ghcr.io
+
+#   push_to_registry_mongodb:
+#     name: Push MongoDB Image to GitHub Container Registry
+#     runs-on: ubuntu-latest
+
+#     steps:
+#       - name: Pull MongoDB Image
+#         run: docker pull mongo:latest
+
+#       - name: Convert repository name to lowercase and tag MongoDB Image for GitHub
+#         run: |
+#           IMAGE_NAME=ghcr.io/$(echo "${{ github.repository_owner }}/loto_mongodb" | tr '[:upper:]' '[:lower:]')
+#           docker tag mongo:latest $IMAGE_NAME:latest
+
+#       - name: Log in to GitHub Container Registry
+#         run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+
+#       - name: Push MongoDB Image
+#         run: |
+#           IMAGE_NAME=ghcr.io/$(echo "${{ github.repository_owner }}/loto_mongodb" | tr '[:upper:]' '[:lower:]')
+#           docker push $IMAGE_NAME:latest
+
+#       - name: Logout from GitHub Container Registry
+#         run: docker logout ghcr.io
+
+# name: Publish Docker Images
+
+# on:
+#   push:
+#     branches:
+#       - main
+
+# jobs:
+#   push_to_registry_backend:
+#     name: Push Backend Docker Image to GitHub Container Registry
+#     runs-on: ubuntu-latest
+
+#     steps:
+#       - name: Checkout repository
+#         uses: actions/checkout@v3
+
+#       - name: Verify GHCR_TOKEN is set
+#         run: |
+#           if [ -z "${{ secrets.GHCR_TOKEN }}" ]; then
+#             echo "❌ GHCR_TOKEN is not set in repository secrets."
+#             exit 1
+#           fi
+
+#       - name: Log in to GitHub Container Registry
+#         run: echo "${{ secrets.GHCR_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+
+#       - name: Build and push Backend Docker image
+#         run: |
+#           IMAGE_NAME=ghcr.io/$(echo "${{ github.repository_owner }}/loto_api_v2_backend" | tr '[:upper:]' '[:lower:]')
+#           docker build --platform linux/amd64 -f Dockerfile.backend -t $IMAGE_NAME:latest -t $IMAGE_NAME:${{ github.sha }} .
+#           docker push $IMAGE_NAME:latest
+#           docker push $IMAGE_NAME:${{ github.sha }}
+
+#       - name: Logout from GitHub Container Registry
+#         run: docker logout ghcr.io
+
+#   push_to_registry_frontend:
+#     name: Push Frontend Docker Image to GitHub Container Registry
+#     runs-on: ubuntu-latest
+
+#     steps:
+#       - name: Checkout repository
+#         uses: actions/checkout@v3
+
+#       - name: Verify GHCR_TOKEN is set
+#         run: |
+#           if [ -z "${{ secrets.GHCR_TOKEN }}" ]; then
+#             echo "❌ GHCR_TOKEN is not set in repository secrets."
+#             exit 1
+#           fi
+
+#       - name: Log in to GitHub Container Registry
+#         run: echo "${{ secrets.GHCR_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+
+#       - name: Build and push Frontend Docker image
+#         run: |
+#           IMAGE_NAME=ghcr.io/$(echo "${{ github.repository_owner }}/loto_api_v2_frontend" | tr '[:upper:]' '[:lower:]')
+#           docker build --platform linux/amd64 -f Dockerfile.frontend -t $IMAGE_NAME:latest -t $IMAGE_NAME:${{ github.sha }} .
+#           docker push $IMAGE_NAME:latest
+#           docker push $IMAGE_NAME:${{ github.sha }}
+
+#       - name: Logout from GitHub Container Registry
+#         run: docker logout ghcr.io
+
+#   push_to_registry_mongodb:
+#     name: Push MongoDB Image to GitHub Container Registry
+#     runs-on: ubuntu-latest
+
+#     steps:
+#       - name: Pull MongoDB Image
+#         run: docker pull mongo:latest
+
+#       - name: Tag MongoDB Image for GitHub Container Registry
+#         run: |
+#           IMAGE_NAME=ghcr.io/$(echo "${{ github.repository_owner }}/loto_mongodb" | tr '[:upper:]' '[:lower:]')
+#           docker tag mongo:latest $IMAGE_NAME:latest
+
+#       - name: Verify GHCR_TOKEN is set
+#         run: |
+#           if [ -z "${{ secrets.GHCR_TOKEN }}" ]; then
+#             echo "❌ GHCR_TOKEN is not set in repository secrets."
+#             exit 1
+#           fi
+
+#       - name: Log in to GitHub Container Registry
+#         run: echo "${{ secrets.GHCR_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+
+#       - name: Push MongoDB Image
+#         run: |
+#           IMAGE_NAME=ghcr.io/$(echo "${{ github.repository_owner }}/loto_mongodb" | tr '[:upper:]' '[:lower:]')
+#           docker push $IMAGE_NAME:latest
+
+#       - name: Logout from GitHub Container Registry
+#         run: docker logout ghcr.io
+
+name: Publish Docker Images
+
+on:
+  push:
+    branches:
+      - main  # Exécute sur la branche principale
+  workflow_dispatch:  # Permet un déclenchement manuel
+
+jobs:
+  push_backend:
+    name: Push Backend Docker Image
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Log in to GitHub Container Registry
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
+
+      - name: Build and push backend image
+        run: |
+          IMAGE_NAME=ghcr.io/${{ github.repository_owner }}/loto_api_v2_backend
+          IMAGE_NAME=$(echo "$IMAGE_NAME" | tr '[:upper:]' '[:lower:]')
+
+          docker build --platform linux/amd64 -t $IMAGE_NAME:latest -t $IMAGE_NAME:${{ github.sha }} -f Dockerfile.backend .
+          docker push $IMAGE_NAME:latest
+          docker push $IMAGE_NAME:${{ github.sha }}
+
+      - name: Logout
+        run: docker logout ghcr.io
+
+  push_frontend:
+    name: Push Frontend Docker Image
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Log in to GitHub Container Registry
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
+
+      - name: Build and push frontend image
+        run: |
+          IMAGE_NAME=ghcr.io/${{ github.repository_owner }}/loto_api_v2_frontend
+          IMAGE_NAME=$(echo "$IMAGE_NAME" | tr '[:upper:]' '[:lower:]')
+
+          docker build --platform linux/amd64 -t $IMAGE_NAME:latest -t $IMAGE_NAME:${{ github.sha }} -f Dockerfile.frontend .
+          docker push $IMAGE_NAME:latest
+          docker push $IMAGE_NAME:${{ github.sha }}
+
+      - name: Logout
+        run: docker logout ghcr.io
+
+  push_mongodb:
+    name: Push MongoDB Image
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Pull MongoDB
+        run: docker pull mongo:latest
+
+      - name: Tag MongoDB for GitHub Container Registry
+        run: |
+          IMAGE_NAME=ghcr.io/${{ github.repository_owner }}/loto_api_v2_mongodb
+          IMAGE_NAME=$(echo "$IMAGE_NAME" | tr '[:upper:]' '[:lower:]')
+
+          docker tag mongo:latest $IMAGE_NAME:latest
+
+      - name: Log in to GitHub Container Registry
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
+
+      - name: Push MongoDB image
+        run: |
+          IMAGE_NAME=ghcr.io/${{ github.repository_owner }}/loto_api_v2_mongodb
+          IMAGE_NAME=$(echo "$IMAGE_NAME" | tr '[:upper:]' '[:lower:]')
+
+          docker push $IMAGE_NAME:latest
+
+      - name: Logout
+        run: docker logout ghcr.io

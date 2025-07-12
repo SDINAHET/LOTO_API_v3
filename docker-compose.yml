@@ -1,0 +1,55 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:14
+    container_name: loto-postgres
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-lotodb}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - loto-network
+
+  mongodb:
+    image: mongo:latest
+    container_name: loto-mongodb
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGODB_USER:-lotouser}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGODB_PASSWORD:-lotopass}
+      MONGO_INITDB_DATABASE: ${MONGODB_DATABASE:-lotodb}
+    ports:
+      - "${MONGODB_PORT:-27017}:27017"
+    volumes:
+      - mongodb_data:/data/db
+    networks:
+      - loto-network
+
+  loto-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: loto-api
+    environment:
+      - SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE:-prod}
+      - POSTGRES_HOST=postgres
+      - MONGODB_HOST=mongodb
+    ports:
+      - "${SERVER_PORT:-8082}:8082"
+    depends_on:
+      - postgres
+      - mongodb
+    networks:
+      - loto-network
+
+networks:
+  loto-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  mongodb_data:

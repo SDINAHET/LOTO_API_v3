@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mes Tickets - Loto Tracker</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="loto_tracker.png">
+</head>
+<body class="bg-light">
+
+<!-- <nav class="navbar navbar-dark bg-dark p-3">
+    <a class="navbar-brand" href="index_connexion.html">
+        <i class="fas fa-home"></i> Accueil
+    </a>
+    <span class="me-3">Bienvenue, <span id="userEmail"></span></span>
+    <button class="btn btn-danger" onclick="logout()">
+        <i class="fas fa-sign-out-alt"></i> Se déconnecter
+    </button>
+</nav> -->
+<!-- <nav class="navbar navbar-dark bg-dark p-3">
+    <a class="navbar-brand" href="index_connexion.html">
+        <i class="fas fa-home"></i> Accueil
+    </a>
+    <span class="me-3 text-white">Bienvenue, <span id="userEmail"></span></span>
+    <button class="btn btn-danger" onclick="logout()">
+        <i class="fas fa-sign-out-alt"></i> Se déconnecter
+    </button>
+</nav> -->
+<nav class="navbar navbar-dark bg-dark p-3 d-flex justify-content-between">
+    <a class="navbar-brand" href="index_connexion.html">
+        <i class="fas fa-home"></i> Accueil
+    </a>
+
+    <div class="d-flex align-items-center">
+        <span class="me-3 text-white">Bienvenue, <span id="userEmail">Utilisateur</span></span>
+        <button class="btn btn-danger" onclick="logout()">
+            <i class="fas fa-sign-out-alt"></i> Se déconnecter
+        </button>
+    </div>
+</nav>
+
+
+
+<div class="container mt-5">
+    <div class="d-flex justify-content-between align-items-center">
+        <h2 class="text-center">Mes Tickets Joués</h2>
+        <button class="btn btn-success" onclick="addTicket()">
+            <i class="fas fa-plus"></i> Ajouter un ticket
+        </button>
+    </div>
+
+    <div class="card shadow-sm p-4 mt-3">
+        <table class="table table-striped text-center">
+            <thead class="table-dark">
+                <tr>
+                    <th><b>Date</b></th>
+                    <th>Numéros</th>
+                    <th>Numéro Chance</th>
+                    <th>Statut</th>
+                    <th><b>Gains (€)</b></th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="ticketsTable">
+                <tr><td colspan="6" class="text-center">Chargement des tickets...</td></tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- MODAL POUR LES DÉTAILS DU TIRAGE
+<div class="modal fade" id="tirageModal" tabindex="-1" aria-labelledby="tirageModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="tirageModalLabel">Détails du Tirage</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="modalTirageBody">
+                Chargement...
+            </div>
+        </div>
+    </div>
+</div> -->
+
+<!-- MODAL POUR LES DÉTAILS DU TIRAGE -->
+<div class="modal fade" id="tirageModal" tabindex="-1" aria-labelledby="tirageModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title fw-bold" id="tirageModalLabel">Détails du Tirage</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="modalTirageBody">
+                <p class="text-center">Chargement...</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<script>
+const API_URL = "http://localhost:8082/api/tickets";
+const API_GAINS = "http://localhost:8082/api/gains";
+const API_TIRAGE = "http://localhost:8082/api/historique/last20/Detail/tirage/";
+
+async function showTirageDetails(date) {
+    try {
+        let formattedDate = date.split("/").reverse().join("-"); // Convertir format FR -> YYYY-MM-DD
+        let response = await axios.get(API_TIRAGE + formattedDate);
+
+        // ✅ Vérification des données
+        if (!response.data) {
+            document.getElementById("modalTirageBody").innerHTML = `
+                <p class="text-center text-danger">❌ Aucune donnée disponible pour ce tirage.</p>
+            `;
+            new bootstrap.Modal(document.getElementById("tirageModal")).show();
+            return;
+        }
+
+        // ✅ Affichage des détails du tirage
+        document.getElementById("modalTirageBody").innerHTML = `
+            <h5 class="text-center fw-bold text-primary">Tirage du ${response.data.jourDeTirage} ${response.data.dateDeTirage}</h5>
+            <div class="text-center">
+                <span class='badge bg-primary m-1 p-2'>${response.data.boule1}</span>
+                <span class='badge bg-primary m-1 p-2'>${response.data.boule2}</span>
+                <span class='badge bg-primary m-1 p-2'>${response.data.boule3}</span>
+                <span class='badge bg-primary m-1 p-2'>${response.data.boule4}</span>
+                <span class='badge bg-primary m-1 p-2'>${response.data.boule5}</span>
+                <span class='badge bg-danger m-1 p-2'>${response.data.numeroChance}</span>
+            </div>
+            <p class="text-center mt-3">
+                Jackpot annoncé : <b>${response.data.rapportDuRang1.toLocaleString()} €</b>
+            </p>
+            <hr>
+            <h5 class="text-center fw-bold">Second Tirage :</h5>
+            <div class="text-center">
+                <span class='badge bg-info m-1 p-2'>${response.data.boule1SecondTirage}</span>
+                <span class='badge bg-info m-1 p-2'>${response.data.boule2SecondTirage}</span>
+                <span class='badge bg-info m-1 p-2'>${response.data.boule3SecondTirage}</span>
+                <span class='badge bg-info m-1 p-2'>${response.data.boule4SecondTirage}</span>
+                <span class='badge bg-info m-1 p-2'>${response.data.boule5SecondTirage}</span>
+            </div>
+            <hr>
+            <h5 class="text-center fw-bold">Joker+ : <span class="text-danger">${response.data.numeroJokerplus}</span></h5>
+        `;
+
+        new bootstrap.Modal(document.getElementById("tirageModal")).show();
+    } catch (error) {
+        console.error("❌ Erreur lors du chargement du tirage :", error);
+        document.getElementById("modalTirageBody").innerHTML = `
+            <p class="text-center text-danger">❌ Erreur lors de la récupération des données.</p>
+        `;
+        new bootstrap.Modal(document.getElementById("tirageModal")).show();
+    }
+}
+
+function addTicket() {
+    window.location.href = "post_ticket.html";
+}
+
+
+
+async function loadUserTickets() {
+    try {
+        const response = await axios.get(API_URL, { withCredentials: true });
+        const gainsResponse = await axios.get(API_GAINS, { withCredentials: true });
+
+        // 🏆 On récupère les gains et on les stocke dans une Map pour un accès rapide
+        const gainsMap = new Map(gainsResponse.data.map(g => [g.ticketId, g.gainAmount]));
+
+        // 📌 Trier les tickets par date décroissante
+        response.data.sort((a, b) => new Date(b.drawDate) - new Date(a.drawDate));
+
+        let tableBody = document.getElementById("ticketsTable");
+        tableBody.innerHTML = "";
+
+        // 🕒 Correction : Normalisation de la date actuelle en UTC
+        const nowUTC = new Date();
+        const todayUTC = new Date(Date.UTC(nowUTC.getUTCFullYear(), nowUTC.getUTCMonth(), nowUTC.getUTCDate()))
+            .toISOString().split('T')[0];
+
+        response.data.forEach(ticket => {
+            // 🕒 Correction : Normalisation de la date du ticket en UTC
+            const drawDate = new Date(ticket.drawDate);
+            const drawDateUTC = new Date(Date.UTC(drawDate.getUTCFullYear(), drawDate.getUTCMonth(), drawDate.getUTCDate()))
+                .toISOString().split('T')[0];
+
+            const gain = gainsMap.has(ticket.id) ? gainsMap.get(ticket.id) : undefined; // 🏆 Vérification des gains
+
+            let status = "En attente"; // 📌 Par défaut : en attente
+            let statusClass = "bg-secondary text-white";
+            let eyeClass = "btn-light"; // Désactivé par défaut
+
+            // ✅ Vérification du jour du tirage (Lundi = 1, Mercredi = 3, Samedi = 6)
+            const dayOfWeek = drawDate.getUTCDay();
+            if (![1, 3, 6].includes(dayOfWeek)) {
+                status = "Erreur Date";
+                statusClass = "bg-danger text-white";
+                eyeClass = "btn-light"; // Désactiver le bouton "voir"
+            }
+            else if (drawDateUTC < todayUTC) { // 📌 Si le tirage est passé et valide
+                if (gain !== undefined) { // ✅ Correction ici : vérifier `undefined` au lieu de `null`
+                    if (gain > 0) {
+                        status = "Gagné";
+                        statusClass = "bg-success text-white";
+                    } else {
+                        status = "Perdu";
+                        statusClass = "bg-warning text-dark";
+                    }
+                    eyeClass = "btn-info"; // Activation du bouton "Voir"
+                }
+            }
+
+            // 🔎 **DEBUG : Vérification de la console**
+            console.log(`Ticket ${ticket.id} - Tirage: ${drawDateUTC}, Aujourd'hui: ${todayUTC}, Gain: ${gain}, Statut: ${status}`);
+
+            let row = `<tr>
+                <td><b>${formatDate(ticket.drawDate)}</b></td>
+                <td>${formatNumbers(ticket.numbers)}</td>
+                <td>${formatChance(ticket.chanceNumber)}</td>
+                <td><span class="badge ${statusClass}">${status}</span></td>
+                <td><b>${gain !== undefined ? formatGain(gain) : "-"}</b></td>
+                <td class="text-end">
+                    <button class="btn btn-sm ${eyeClass}" onclick="showTirageDetails('${ticket.drawDate}')" ${eyeClass === "btn-light" ? "disabled" : ""}>
+                        <i class="fas fa-eye"></i>
+                    </button>
+                    <a class="btn btn-warning btn-sm" href="put_ticket.html?id=${ticket.id}">
+                        <i class="fas fa-pen"></i>
+                    </a>
+                    <button class="btn btn-danger btn-sm" onclick="deleteTicket('${ticket.id}')">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </td>
+            </tr>`;
+            tableBody.innerHTML += row;
+        });
+    } catch (error) {
+        console.error("❌ Erreur lors du chargement des tickets :", error);
+    }
+}
+
+async function showTirageDetails(date) {
+    try {
+        let formattedDate = new Date(date).toISOString().split("T")[0]; // Normalisation ISO
+        console.log(`🔍 Requête API vers : ${API_TIRAGE}${formattedDate}`);
+
+        let response = await axios.get(`${API_TIRAGE}${formattedDate}`);
+        let data = response.data;
+
+        if (!data || Object.keys(data).length === 0) {
+            document.getElementById("modalTirageBody").innerHTML = "<p class='text-center text-warning'>Aucun détail trouvé.</p>";
+            new bootstrap.Modal(document.getElementById("tirageModal")).show();
+            return;
+        }
+
+        // Extraction des données et sécurité contre les valeurs nulles
+        let numeros = [data.boule1, data.boule2, data.boule3, data.boule4, data.boule5].filter(Boolean);
+        let secondTirage = [data.boule1SecondTirage, data.boule2SecondTirage, data.boule3SecondTirage, data.boule4SecondTirage, data.boule5SecondTirage].filter(Boolean);
+
+        let modalContent = `
+            <div class="container-fluid">
+                <h4 class="text-center text-danger fw-bold">Résultat Loto du ${data.jourDeTirage} ${data.dateDeTirage}</h4>
+                <div class="row">
+                    <div class="col-md-6 text-center">
+                        <h5 class="fw-bold">Le tirage</h5>
+                        <div id="numbersContainer" class="mb-3">
+                            ${numeros.map(num => `<span class="lottery-ball">${num}</span>`).join('')}
+                            <span class="lottery-ball lucky-number">${data.numeroChance || "❌"}</span>
+                        </div>
+                    </div>
+                    <div class="col-md-6 text-center">
+                        <h5 class="fw-bold">Second tirage</h5>
+                        <div class="mb-3">
+                            ${secondTirage.length ? secondTirage.map(num => `<span class="lottery-ball">${num}</span>`).join('') : "❌ Non disponible"}
+                        </div>
+                    </div>
+                </div>
+
+                <h5 class="text-center text-primary fw-bold">Jackpot annoncé : <span class="text-dark">${data.rapportDuRang1.toLocaleString()} €</span></h5>
+
+                <hr>
+
+                <h5 class="text-center fw-bold">Rapports du tirage :</h5>
+                <div class="table-responsive">
+                    <table class="table table-striped text-center">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>Rang</th>
+                                <th>Gagnants</th>
+                                <th>Gain (€)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${[1, 2, 3, 4, 5, 6, 7, 8, 9].map(rang => `
+                                <tr>
+                                    <td>${rang}</td>
+                                    <td><strong>${data[`nombreDeGagnantAuRang${rang}`]}</strong></td>
+                                    <td><strong>${data[`rapportDuRang${rang}`] ? data[`rapportDuRang${rang}`].toLocaleString() + " €" : "-"}</strong></td>
+                                </tr>`).join('')}
+                        </tbody>
+                    </table>
+                </div>
+
+                <hr>
+                <h5 class="text-center fw-bold">Joker+ : <span class="text-primary">${data.numeroJokerplus || "❌ Non disponible"}</span></h5>
+            </div>
+
+            <style>
+            .lottery-ball {
+                display: inline-block;
+                width: 40px;
+                height: 40px;
+                line-height: 40px;
+                text-align: center;
+                font-size: 1.2em;
+                font-weight: bold;
+                color: white;
+                border-radius: 50%;
+                margin: 5px;
+                background-color: #007bff;
+            }
+            .lucky-number {
+                background-color: #dc3545;
+            }
+            </style>
+        `;
+
+        document.getElementById("modalTirageBody").innerHTML = modalContent;
+
+        new bootstrap.Modal(document.getElementById("tirageModal")).show();
+
+    } catch (error) {
+        console.error("❌ Erreur lors du chargement du tirage :", error);
+        document.getElementById("modalTirageBody").innerHTML = "<p class='text-center text-danger'>❌ Erreur lors de la récupération des données.</p>";
+        new bootstrap.Modal(document.getElementById("tirageModal")).show();
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+function formatDate(dateStr) {
+    const date = new Date(dateStr);
+    return date.toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' });
+}
+
+function formatNumbers(numbersStr) {
+    return numbersStr ? numbersStr.split("-").map(num => `<span class="badge bg-primary">${num}</span>`).join(" ") : "N/A";
+}
+
+function formatChance(num) {
+    return num ? `<span class="badge bg-danger">${num}</span>` : "N/A";
+}
+
+function formatGain(gain) {
+    return gain ? `${gain.toFixed(2)} €` : "-";
+}
+
+async function deleteTicket(ticketId) {
+    if (!confirm("Voulez-vous vraiment supprimer ce ticket ?")) return;
+
+    try {
+        await axios.delete(`${API_URL}/${ticketId}`, { withCredentials: true });
+
+        // Supprime l'entrée du tableau après suppression réussie
+        document.getElementById(`ticket-${ticketId}`)?.remove();
+
+        alert("✅ Ticket supprimé avec succès !");
+    } catch (error) {
+        console.error("❌ Erreur lors de la suppression du ticket :", error);
+        alert("⚠️ Impossible de supprimer ce ticket. Vérifiez votre connexion et réessayez.");
+    }
+}
+
+async function checkUserAuth() {
+    try {
+        const response = await axios.get("http://localhost:8082/api/auth/me", { withCredentials: true });
+
+        if (response.status === 200 && response.data.email) {
+            // Vérifie si `first_name` existe, sinon affiche l'email
+            document.getElementById("userEmail").textContent = response.data.first_name || response.data.email;
+        } else {
+            document.getElementById("userEmail").textContent = "Utilisateur inconnu";
+        }
+    } catch (error) {
+        console.error("❌ Erreur d'authentification :", error);
+        document.getElementById("userEmail").textContent = "Utilisateur inconnu";
+    }
+}
+
+// Appel automatique lors du chargement de la page
+document.addEventListener("DOMContentLoaded", checkUserAuth);
+
+
+
+// ✅ Déconnexion
+async function logout() {
+    await axios.post("http://localhost:8082/api/auth/logout", {}, { withCredentials: true });
+    window.location.href = "index.html";
+}
+
+document.addEventListener("DOMContentLoaded", loadUserTickets);
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<!-- Modal Détail du Tirage -->
+<div class="modal fade" id="tirageModal" tabindex="-1" aria-labelledby="tirageModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title fw-bold" id="tirageModalLabel">Détail du Tirage</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="modalTirageBody">
+                Chargement...
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>
